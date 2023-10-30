@@ -28,7 +28,10 @@
 #define STATE_FULLSCREEN_ENTERED 3
 #define STATE_DOCKED 4
 
-#define DWMWA_USE_IMMERSIVE_DARK_MODE 19
+// The value of DWMWA_USE_IMMERSIVE_DARK_MODE changed on newer Windows version
+// See: https://learn.microsoft.com/en-us/windows/win32/api/dwmapi/ne-dwmapi-dwmwindowattribute
+#define DWMWA_USE_IMMERSIVE_DARK_MODE_OLD 19
+#define DWMWA_USE_IMMERSIVE_DARK_MODE 20
 
 #define APPBAR_CALLBACK WM_USER + 0x01;
 
@@ -1006,8 +1009,13 @@ void WindowManager::SetBrightness(const flutter::EncodableMap& args) {
   const BOOL is_dark_mode = brightness == "dark";
 
   HWND hWnd = GetMainWindow();
-  DwmSetWindowAttribute(hWnd, DWMWA_USE_IMMERSIVE_DARK_MODE, &is_dark_mode,
-                        sizeof(is_dark_mode));
+  HRESULT result = DwmSetWindowAttribute(hWnd, DWMWA_USE_IMMERSIVE_DARK_MODE,
+                                         &is_dark_mode,
+                                         sizeof(is_dark_mode));
+  if (S_OK != result) {
+    DwmSetWindowAttribute(hWnd, DWMWA_USE_IMMERSIVE_DARK_MODE_OLD, &is_dark_mode,
+                          sizeof(is_dark_mode));
+  }
 }
 
 void WindowManager::SetIgnoreMouseEvents(const flutter::EncodableMap& args) {
